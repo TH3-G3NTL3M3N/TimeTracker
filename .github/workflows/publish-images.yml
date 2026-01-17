@@ -13,6 +13,10 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
+      - name: Set image owner
+        id: vars
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_OUTPUT
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -36,8 +40,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/timetracker-web:latest
-            ghcr.io/${{ github.repository_owner }}/timetracker-web:${{ github.sha }}
+            ghcr.io/${{ steps.vars.outputs.owner }}/timetracker-web:latest
+            ghcr.io/${{ steps.vars.outputs.owner }}/timetracker-web:${{ github.sha }}
           build-args: |
             VITE_LOGIN_USER=${{ secrets.VITE_LOGIN_USER }}
             VITE_LOGIN_PASS=${{ secrets.VITE_LOGIN_PASS }}
@@ -49,5 +53,5 @@ jobs:
           file: ./server/Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/timetracker-api:latest
-            ghcr.io/${{ github.repository_owner }}/timetracker-api:${{ github.sha }}
+            ghcr.io/${{ steps.vars.outputs.owner }}/timetracker-api:latest
+            ghcr.io/${{ steps.vars.outputs.owner }}/timetracker-api:${{ github.sha }}
