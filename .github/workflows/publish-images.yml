@@ -1,0 +1,53 @@
+name: Publish Docker Images
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/timetracker-web:latest
+            ghcr.io/${{ github.repository_owner }}/timetracker-web:${{ github.sha }}
+          build-args: |
+            VITE_LOGIN_USER=${{ secrets.VITE_LOGIN_USER }}
+            VITE_LOGIN_PASS=${{ secrets.VITE_LOGIN_PASS }}
+
+      - name: Build and push api image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/timetracker-api:latest
+            ghcr.io/${{ github.repository_owner }}/timetracker-api:${{ github.sha }}
