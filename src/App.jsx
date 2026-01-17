@@ -511,7 +511,7 @@ export default function App() {
             Export CSV
           </button>
           <button
-            className="btn ghost"
+            className="btn logout"
             type="button"
             onClick={() => setIsAuthed(false)}
           >
