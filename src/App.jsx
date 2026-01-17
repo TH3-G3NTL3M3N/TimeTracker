@@ -91,7 +91,7 @@ const getMonthDays = (date) => {
   const year = date.getFullYear();
   const month = date.getMonth();
   const firstDay = new Date(year, month, 1);
-  const startWeekday = firstDay.getDay();
+  const startWeekday = (firstDay.getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const days = [];
   for (let i = 0; i < startWeekday; i += 1) {
@@ -103,7 +103,7 @@ const getMonthDays = (date) => {
   return days;
 };
 
-const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const toLocalDateKey = (date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
     date.getDate()
@@ -1192,7 +1192,7 @@ function CalendarView({ entries, rate, onSetHours }) {
   };
 
   return (
-    <div className="calendar">
+    <div className={`calendar${mode === "week" ? " week" : ""}${mode === "month" ? " month" : ""}`}>
       <div className="calendar-header">
         <div className="calendar-title">
           <div className="calendar-toggle">
@@ -1222,78 +1222,80 @@ function CalendarView({ entries, rate, onSetHours }) {
           </button>
         </div>
       </div>
-      <div className="calendar-grid">
-        {weekDays.map((day) => (
-          <span key={day} className="calendar-day">
-            {day}
-          </span>
-        ))}
-        {(mode === "month" ? days : weekDaysList).map((date, index) => {
-          if (!date) {
-            return <div key={`empty-${index}`} className="calendar-cell muted" />;
-          }
-          const dateKey = toLocalDateKey(date);
-          const hours = entryByDate[dateKey];
-          const isToday = date.toDateString() === today.toDateString();
-          const isEditing = editingDate === dateKey;
-          return (
-            <div
-              key={dateKey}
-              className={`calendar-cell${isToday ? " today" : ""}${
-                isEditing ? " editing" : ""
-              }`}
-              onClick={() => {
-                if (isEditing) {
-                  return;
-                }
-                if (editingDate && editingDate !== dateKey) {
-                  handleSave();
-                }
-                setEditingDate(dateKey);
-                setDraftHours(hours ? String(hours) : "");
-              }}
-            >
-              <span className="calendar-date">{date.getDate()}</span>
-              {isEditing ? (
-                <div
-                  className="calendar-edit"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.25"
-                    placeholder="0"
-                    value={draftHours}
-                    onChange={(event) => setDraftHours(event.target.value)}
-                    onBlur={handleSave}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        handleSave();
-                      }
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        setEditingDate(null);
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <span>hrs</span>
-                </div>
-              ) : hours ? (
-                <div className="calendar-hours">
-                  <span>{formatHours(hours)}h</span>
-                  <span>{currencyFormatter.format(hours * rate)}</span>
-                </div>
-              ) : (
-                <button className="calendar-add" type="button">
-                  +
-                </button>
-              )}
-            </div>
-          );
-        })}
+      <div className="calendar-grid-scroll">
+        <div className="calendar-grid">
+          {weekDays.map((day) => (
+            <span key={day} className="calendar-day">
+              {day}
+            </span>
+          ))}
+          {(mode === "month" ? days : weekDaysList).map((date, index) => {
+            if (!date) {
+              return <div key={`empty-${index}`} className="calendar-cell muted" />;
+            }
+            const dateKey = toLocalDateKey(date);
+            const hours = entryByDate[dateKey];
+            const isToday = date.toDateString() === today.toDateString();
+            const isEditing = editingDate === dateKey;
+            return (
+              <div
+                key={dateKey}
+                className={`calendar-cell${isToday ? " today" : ""}${
+                  isEditing ? " editing" : ""
+                }`}
+                onClick={() => {
+                  if (isEditing) {
+                    return;
+                  }
+                  if (editingDate && editingDate !== dateKey) {
+                    handleSave();
+                  }
+                  setEditingDate(dateKey);
+                  setDraftHours(hours ? String(hours) : "");
+                }}
+              >
+                <span className="calendar-date">{date.getDate()}</span>
+                {isEditing ? (
+                  <div
+                    className="calendar-edit"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.25"
+                      placeholder="0"
+                      value={draftHours}
+                      onChange={(event) => setDraftHours(event.target.value)}
+                      onBlur={handleSave}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleSave();
+                        }
+                        if (event.key === "Escape") {
+                          event.preventDefault();
+                          setEditingDate(null);
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <span>hrs</span>
+                  </div>
+                ) : hours ? (
+                  <div className="calendar-hours">
+                    <span>{formatHours(hours)}h</span>
+                    <span>{currencyFormatter.format(hours * rate)}</span>
+                  </div>
+                ) : (
+                  <button className="calendar-add" type="button">
+                    +
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

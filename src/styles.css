@@ -606,6 +606,11 @@ input {
   gap: 10px;
 }
 
+.calendar-grid-scroll {
+  width: 100%;
+  min-width: 0;
+}
+
 .calendar-day {
   font-size: 12px;
   text-transform: uppercase;
@@ -727,10 +732,68 @@ input {
 }
 
 @media (max-width: 720px) {
+  .app {
+    padding: 24px 20px 40px;
+    gap: 24px;
+  }
+
+  .login-card {
+    padding: 24px;
+  }
+
+  .login-title {
+    font-size: 24px;
+    letter-spacing: 0.08em;
+  }
+
   .topbar {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .logo-mark {
+    font-size: 24px;
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    letter-spacing: 0.16em;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .topbar-actions .btn {
+    width: 100%;
+  }
+
+  .summary-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px;
+  }
+
+  .summary-card.highlight h2 {
+    font-size: 24px;
+  }
+
+  .summary-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .summary-range {
+    width: 100%;
+  }
+
+  .summary-range select {
+    width: 100%;
   }
 
   .detail-header {
@@ -740,6 +803,20 @@ input {
 
   .detail-actions {
     flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .detail-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .tabs {
+    width: 100%;
+  }
+
+  .tab {
+    flex: 1 1 auto;
+    text-align: center;
   }
 
   .entries-header,
@@ -748,10 +825,131 @@ input {
     grid-template-rows: auto auto;
   }
 
+  .entries-header {
+    font-size: 10px;
+  }
+
+  .entry-row {
+    gap: 10px;
+  }
+
+  .icon-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .workspace {
+    gap: 20px;
+    min-width: 0;
+  }
+
+  .projects {
+    padding: 16px;
+    min-width: 0;
+  }
+
+  .project-row {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .project-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .project-detail {
+    padding: 20px;
+    min-width: 0;
+  }
+
+  .calendar-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .calendar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .calendar-grid {
+    gap: 6px;
+  }
+
+  .calendar-day {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+
+  .calendar-cell {
+    min-height: 70px;
+    padding: 10px;
+  }
+
+
+  .calendar-date {
+    font-size: 12px;
+  }
+
+  .calendar-hours {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .calendar.week {
+    overflow-x: hidden;
+  }
+
+  .calendar.week .calendar-grid-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .calendar.week .calendar-grid {
+    min-width: 560px;
+    width: max-content;
+  }
+
+  .calendar.month {
+    overflow-x: hidden;
+  }
+
+  .calendar.month .calendar-grid-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar.month .calendar-grid {
+    min-width: 560px;
+    width: max-content;
+  }
+
   .summary-metrics {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .modal {
+    padding: 18px;
+  }
+
+  .modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
   }
 }
 
