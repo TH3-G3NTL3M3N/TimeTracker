@@ -16,6 +16,11 @@ const defaultState = {
     name: "",
     rate: 85,
   },
+  timer: {
+    seconds: 0,
+    isRunning: false,
+    startedAt: null,
+  },
   projects: [
     {
       id: makeId(),
@@ -33,13 +38,28 @@ const normalizeState = (value) => {
   if (!value?.profile || !Array.isArray(value?.projects)) {
     return defaultState;
   }
+  const rawTimer = value.timer || {};
+  const timerSeconds = Number(rawTimer.seconds || 0);
+  const startedAt =
+    Number.isFinite(rawTimer.startedAt) && rawTimer.startedAt > 0
+      ? rawTimer.startedAt
+      : null;
+  const isRunning = Boolean(rawTimer.isRunning && startedAt);
   const normalizedProjects = value.projects.map((project) => ({
     ...project,
     rate: project.rate ?? value.profile.rate ?? 0,
     archived: Boolean(project.archived),
     entries: Array.isArray(project.entries) ? project.entries : [],
   }));
-  return { ...value, projects: normalizedProjects };
+  return {
+    ...value,
+    timer: {
+      seconds: Number.isFinite(timerSeconds) ? timerSeconds : 0,
+      isRunning,
+      startedAt,
+    },
+    projects: normalizedProjects,
+  };
 };
 
 const getInitialAuth = () => {
@@ -52,6 +72,17 @@ const sumHours = (entries) =>
 
 const formatHours = (value) =>
   Number.isFinite(value) ? value.toFixed(1).replace(/\.0$/, "") : "0";
+
+const formatTimer = (totalSeconds) => {
+  const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+  const padded = [minutes, seconds].map((value) => String(value).padStart(2, "0"));
+  return hours > 0
+    ? `${hours}:${padded.join(":")}`
+    : padded.join(":");
+};
 
 const buildCsv = ({ profile, projects }) => {
   const rows = [
@@ -125,6 +156,8 @@ export default function App() {
   const [archivedOpen, setArchivedOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmProject, setConfirmProject] = useState(null);
+  const [timerTick, setTimerTick] = useState(0);
+  const timerRef = useRef(null);
   const [exportProjectIds, setExportProjectIds] = useState(
     () => new Set(state.projects.map((project) => project.id))
   );
@@ -176,6 +209,25 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(AUTH_KEY, isAuthed ? "true" : "false");
   }, [isAuthed]);
+
+  useEffect(() => {
+    if (!state.timer?.isRunning) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
+    }
+    timerRef.current = setInterval(() => {
+      setTimerTick((prev) => prev + 1);
+    }, 1000);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [state.timer?.isRunning]);
 
   useEffect(() => {
     if (!isAuthed) {
@@ -264,6 +316,15 @@ export default function App() {
   );
 
   const syncMessage = stateError || (isLoadingState ? "Loading storage..." : "");
+
+  const timerSeconds = useMemo(() => {
+    const timer = state.timer || defaultState.timer;
+    if (timer.isRunning && timer.startedAt) {
+      const elapsed = Math.floor((Date.now() - timer.startedAt) / 1000);
+      return Math.max(0, timer.seconds + elapsed);
+    }
+    return timer.seconds;
+  }, [state.timer, timerTick]);
 
   const totals = useMemo(() => {
     const totalHours = activeProjects.reduce(
@@ -507,6 +568,59 @@ export default function App() {
               {syncMessage}
             </span>
           ) : null}
+          <div className="timer">
+            <span className="timer-display">{formatTimer(timerSeconds)}</span>
+            <div className="timer-controls">
+              <button
+                className="btn ghost small"
+                type="button"
+                onClick={() =>
+                  setState((prev) => {
+                    const timer = prev.timer || defaultState.timer;
+                    if (timer.isRunning) {
+                      const elapsed = timer.startedAt
+                        ? Math.floor((Date.now() - timer.startedAt) / 1000)
+                        : 0;
+                      return {
+                        ...prev,
+                        timer: {
+                          seconds: Math.max(0, timer.seconds + elapsed),
+                          isRunning: false,
+                          startedAt: null,
+                        },
+                      };
+                    }
+                    return {
+                      ...prev,
+                      timer: {
+                        seconds: Math.max(0, timer.seconds || 0),
+                        isRunning: true,
+                        startedAt: Date.now(),
+                      },
+                    };
+                  })
+                }
+              >
+                {state.timer?.isRunning ? "Stop" : "Start"}
+              </button>
+              <button
+                className="btn ghost small"
+                type="button"
+                onClick={() => {
+                  setState((prev) => ({
+                    ...prev,
+                    timer: {
+                      seconds: 0,
+                      isRunning: false,
+                      startedAt: null,
+                    },
+                  }));
+                }}
+              >
+                Reset
+              </button>
+            </div>
+          </div>
           <button className="btn ghost" type="button" onClick={handleExport}>
             Export CSV
           </button>
