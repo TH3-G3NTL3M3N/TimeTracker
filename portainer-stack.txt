@@ -14,9 +14,11 @@ services:
       retries: 10
 
   api:
-    image: timetracker-api:latest
+    image: ghcr.io/th3-g3ntl3m3n/timetracker-api:latest
     environment:
       DATABASE_URL: postgres://tr4ck:tr4ck@db:5432/tr4ck
+      LOGIN_USER: your_username
+      LOGIN_PASS: your_password
     depends_on:
       db:
         condition: service_healthy
@@ -31,9 +33,9 @@ services:
       retries: 10
 
   web:
-    image: timetracker-web:latest
+    image: ghcr.io/th3-g3ntl3m3n/timetracker-web:latest
     ports:
-      - "8080:80"
+      - "8090:80"
     depends_on:
       api:
         condition: service_healthy

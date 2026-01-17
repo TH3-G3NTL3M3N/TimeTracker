@@ -110,12 +110,7 @@ const toLocalDateKey = (date) =>
   ).padStart(2, "0")}`;
 
 export default function App() {
-  const expectedUser = import.meta.env.VITE_LOGIN_USER || "";
-  const expectedPass = import.meta.env.VITE_LOGIN_PASS || "";
-  const authRequired = Boolean(expectedUser || expectedPass);
-  const [isAuthed, setIsAuthed] = useState(() =>
-    authRequired ? getInitialAuth() : true
-  );
+  const [isAuthed, setIsAuthed] = useState(() => getInitialAuth());
   const [state, setState] = useState(() => normalizeState(defaultState));
   const [isLoadingState, setIsLoadingState] = useState(true);
   const [stateError, setStateError] = useState("");
@@ -496,13 +491,7 @@ export default function App() {
   };
 
   if (!isAuthed) {
-    return (
-      <LoginScreen
-        expectedUser={expectedUser}
-        expectedPass={expectedPass}
-        onSuccess={() => setIsAuthed(true)}
-      />
-    );
+    return <LoginScreen onSuccess={() => setIsAuthed(true)} />;
   }
 
   return (
@@ -521,15 +510,13 @@ export default function App() {
           <button className="btn ghost" type="button" onClick={handleExport}>
             Export CSV
           </button>
-          {authRequired ? (
-            <button
-              className="btn ghost"
-              type="button"
-              onClick={() => setIsAuthed(false)}
-            >
-              Log out
-            </button>
-          ) : null}
+          <button
+            className="btn ghost"
+            type="button"
+            onClick={() => setIsAuthed(false)}
+          >
+            Log out
+          </button>
         </div>
       </header>
 
@@ -1030,10 +1017,11 @@ export default function App() {
   );
 }
 
-function LoginScreen({ expectedUser, expectedPass, onSuccess }) {
+function LoginScreen({ onSuccess }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [lockUntil, setLockUntil] = useState(() => {
     const stored = localStorage.getItem(AUTH_LOCK_KEY);
     return stored ? Number(stored) : 0;
@@ -1046,31 +1034,41 @@ function LoginScreen({ expectedUser, expectedPass, onSuccess }) {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const now = Date.now();
     if (lockUntil && now < lockUntil) {
       setError("Too many attempts. Try again shortly.");
       return;
     }
-    const userOk = expectedUser ? username === expectedUser : true;
-    const passOk = expectedPass ? password === expectedPass : true;
-    if (userOk && passOk) {
-      failedAttemptsRef.current = 0;
-      localStorage.removeItem(AUTH_LOCK_KEY);
-      onSuccess();
-      return;
+    try {
+      setIsSubmitting(true);
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+      if (response.ok) {
+        failedAttemptsRef.current = 0;
+        localStorage.removeItem(AUTH_LOCK_KEY);
+        onSuccess();
+        return;
+      }
+      failedAttemptsRef.current += 1;
+      if (failedAttemptsRef.current >= 5) {
+        const nextLock = now + 30 * 1000;
+        setLockUntil(nextLock);
+        localStorage.setItem(AUTH_LOCK_KEY, String(nextLock));
+        failedAttemptsRef.current = 0;
+        setError("Too many attempts. Try again shortly.");
+        return;
+      }
+      setError("Invalid credentials. Try again.");
+    } catch (err) {
+      setError("Unable to reach server. Try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    failedAttemptsRef.current += 1;
-    if (failedAttemptsRef.current >= 5) {
-      const nextLock = now + 30 * 1000;
-      setLockUntil(nextLock);
-      localStorage.setItem(AUTH_LOCK_KEY, String(nextLock));
-      failedAttemptsRef.current = 0;
-      setError("Too many attempts. Try again shortly.");
-      return;
-    }
-    setError("Invalid credentials. Try again.");
   };
 
   const remainingSeconds =
@@ -1093,7 +1091,7 @@ function LoginScreen({ expectedUser, expectedPass, onSuccess }) {
               autoComplete="username"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              disabled={remainingSeconds > 0}
+              disabled={remainingSeconds > 0 || isSubmitting}
             />
           </label>
           <label>
@@ -1103,7 +1101,7 @@ function LoginScreen({ expectedUser, expectedPass, onSuccess }) {
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              disabled={remainingSeconds > 0}
+              disabled={remainingSeconds > 0 || isSubmitting}
             />
           </label>
           {error ? <p className="login-error">{error}</p> : null}
@@ -1112,8 +1110,8 @@ function LoginScreen({ expectedUser, expectedPass, onSuccess }) {
               Try again in {remainingSeconds}s.
             </p>
           ) : null}
-          <button className="btn" type="submit">
-            Sign in
+          <button className="btn" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Checking..." : "Sign in"}
           </button>
         </form>
       </div>

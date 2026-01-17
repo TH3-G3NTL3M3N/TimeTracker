@@ -5,6 +5,8 @@ const { Pool } = pg;
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
 const DATABASE_URL = process.env.DATABASE_URL;
+const LOGIN_USER = process.env.LOGIN_USER || "";
+const LOGIN_PASS = process.env.LOGIN_PASS || "";
 
 if (!DATABASE_URL) {
   console.error("DATABASE_URL is required.");
@@ -34,6 +36,19 @@ app.get("/health", async (_req, res) => {
   } catch (error) {
     res.status(500).json({ ok: false });
   }
+});
+
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body || {};
+  if (!LOGIN_USER || !LOGIN_PASS) {
+    res.status(500).json({ error: "Login not configured." });
+    return;
+  }
+  if (username === LOGIN_USER && password === LOGIN_PASS) {
+    res.json({ ok: true });
+    return;
+  }
+  res.status(401).json({ error: "Invalid credentials." });
 });
 
 app.get("/api/state", async (_req, res) => {

@@ -42,9 +42,6 @@ jobs:
           tags: |
             ghcr.io/${{ steps.vars.outputs.owner }}/timetracker-web:latest
             ghcr.io/${{ steps.vars.outputs.owner }}/timetracker-web:${{ github.sha }}
-          build-args: |
-            VITE_LOGIN_USER=${{ secrets.VITE_LOGIN_USER }}
-            VITE_LOGIN_PASS=${{ secrets.VITE_LOGIN_PASS }}
 
       - name: Build and push api image
         uses: docker/build-push-action@v6
