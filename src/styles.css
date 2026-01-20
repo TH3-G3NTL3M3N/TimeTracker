@@ -844,6 +844,10 @@ input {
     gap: 24px;
   }
 
+  .summary {
+    grid-template-columns: 1fr;
+  }
+
   .login-card {
     padding: 24px;
   }
@@ -898,6 +902,8 @@ input {
     flex-direction: column;
     align-items: stretch;
     padding: 20px;
+    width: 100%;
+    min-width: 0;
   }
 
   .summary-card.highlight h2 {
@@ -916,6 +922,11 @@ input {
 
   .summary-range select {
     width: 100%;
+  }
+
+  .summary-card label {
+    width: 100%;
+    flex: 1 1 auto;
   }
 
   .detail-header {
@@ -1056,10 +1067,18 @@ input {
     gap: 16px;
   }
 
+  .summary-card.invoice {
+    gap: 12px;
+  }
+
+  .summary-card.invoice .summary-metrics {
+    gap: 10px;
+  }
+
   .invoice-date-bottom {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
   }
 
   .invoice-date-bottom .date-input input,
