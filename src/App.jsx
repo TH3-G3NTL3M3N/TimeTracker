@@ -15,6 +15,7 @@ const defaultState = {
   profile: {
     name: "",
     rate: 85,
+    lastInvoiceDate: "",
   },
   timer: {
     seconds: 0,
@@ -38,6 +39,7 @@ const normalizeState = (value) => {
   if (!value?.profile || !Array.isArray(value?.projects)) {
     return defaultState;
   }
+  const rawProfile = value.profile || {};
   const rawTimer = value.timer || {};
   const timerSeconds = Number(rawTimer.seconds || 0);
   const startedAt =
@@ -53,6 +55,13 @@ const normalizeState = (value) => {
   }));
   return {
     ...value,
+    profile: {
+      ...rawProfile,
+      lastInvoiceDate:
+        typeof rawProfile.lastInvoiceDate === "string"
+          ? rawProfile.lastInvoiceDate
+          : "",
+    },
     timer: {
       seconds: Number.isFinite(timerSeconds) ? timerSeconds : 0,
       isRunning,
@@ -206,6 +215,22 @@ export default function App() {
       return total + Number(entry.hours || 0);
     }, 0);
 
+  const lastInvoiceDate = state.profile.lastInvoiceDate;
+  const isAfterInvoice = (dateString) => {
+    if (!lastInvoiceDate) {
+      return true;
+    }
+    return dateString > lastInvoiceDate;
+  };
+
+  const getProjectHoursSinceInvoice = (entries) =>
+    entries.reduce((total, entry) => {
+      if (!isAfterInvoice(entry.date)) {
+        return total;
+      }
+      return total + Number(entry.hours || 0);
+    }, 0);
+
   useEffect(() => {
     localStorage.setItem(AUTH_KEY, isAuthed ? "true" : "false");
   }, [isAuthed]);
@@ -341,6 +366,16 @@ export default function App() {
     }, 0);
     return { totalHours, earned, projectCount };
   }, [activeProjects, state.profile.rate, rangeStart, rangeEnd]);
+
+  const invoiceTotals = useMemo(() => {
+    if (!activeProject) {
+      return { totalHours: 0, earned: 0, projectCount: 0 };
+    }
+    const totalHours = getProjectHoursSinceInvoice(activeProject.entries);
+    const earned = totalHours * getProjectRate(activeProject);
+    const projectCount = totalHours > 0 ? 1 : 0;
+    return { totalHours, earned, projectCount };
+  }, [activeProject, state.profile.rate, lastInvoiceDate]);
 
   const updateProfile = (updates) => {
     setState((prev) => ({
@@ -687,6 +722,42 @@ export default function App() {
             <div>
               <p className="eyebrow">Projects</p>
               <h2>{totals.projectCount}</h2>
+            </div>
+          </div>
+        </div>
+        <div className="summary-card invoice">
+          <div className="summary-card-header">
+            <div>
+              <p className="summary-label">
+                <strong>Since last invoice Totals</strong>
+              </p>
+              {lastInvoiceDate ? (
+                <p className="summary-subtitle">From {lastInvoiceDate}</p>
+              ) : null}
+            </div>
+          </div>
+          <label>
+            <span>Last invoice sent</span>
+            <input
+              type="date"
+              value={state.profile.lastInvoiceDate}
+              onChange={(event) =>
+                updateProfile({ lastInvoiceDate: event.target.value })
+              }
+            />
+          </label>
+          <div className="summary-metrics">
+            <div>
+              <p className="eyebrow">Hours</p>
+              <h2>{formatHours(invoiceTotals.totalHours)}</h2>
+            </div>
+            <div>
+              <p className="eyebrow">Earned</p>
+              <h2>{currencyFormatter.format(invoiceTotals.earned)}</h2>
+            </div>
+            <div>
+              <p className="eyebrow">Projects</p>
+              <h2>{invoiceTotals.projectCount}</h2>
             </div>
           </div>
         </div>
