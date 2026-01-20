@@ -736,16 +736,6 @@ export default function App() {
               ) : null}
             </div>
           </div>
-          <label>
-            <span>Last invoice sent</span>
-            <input
-              type="date"
-              value={state.profile.lastInvoiceDate}
-              onChange={(event) =>
-                updateProfile({ lastInvoiceDate: event.target.value })
-              }
-            />
-          </label>
           <div className="summary-metrics">
             <div>
               <p className="eyebrow">Hours</p>
@@ -759,6 +749,24 @@ export default function App() {
               <p className="eyebrow">Projects</p>
               <h2>{invoiceTotals.projectCount}</h2>
             </div>
+          </div>
+          <div className="invoice-date-bottom">
+            <div className="date-input">
+              <input
+                type="date"
+                value={state.profile.lastInvoiceDate}
+                onChange={(event) =>
+                  updateProfile({ lastInvoiceDate: event.target.value })
+                }
+              />
+            </div>
+            <button
+              className="btn ghost small"
+              type="button"
+              onClick={() => updateProfile({ lastInvoiceDate: toLocalDateKey(new Date()) })}
+            >
+              TODAY
+            </button>
           </div>
         </div>
       </section>
